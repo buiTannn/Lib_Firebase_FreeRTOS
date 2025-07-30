@@ -11,7 +11,7 @@ platform ini: add this line
 ---------------------------------------------------------------------------------------------------------
 lib_deps = 
     https://github.com/buiTannn/Lib_Firebase_FreeRTOS.git
-board_build.embed_files = lib/Lib_Firebase_FreeRTOS/firebase_root_cert.pem
+board_build.embed_files = .pio/libdeps/esp32doit-devkit-v1/Lib_Firebase_FreeRTOS/firebase_root_cert.pem
 ---------------------------------------------------------------------------------------------------------
 
 Add bellow to CMakeList folder src 
