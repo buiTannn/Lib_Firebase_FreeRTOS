@@ -12,12 +12,13 @@
 #include "esp_event.h"
 #include "esp_netif.h"
 #include "nvs_flash.h"
+#include "esp_log.h"
 
-#define WIFI_SSID "SSID" 
-#define WIFI_PASS "PASS"
+#define WIFI_SSID "YOUR_NAME_WIFI" // your name wifi
+#define WIFI_PASS "YOUR_PASS_WIFI" // your password wifi
 
-#define BASE_URL "/your base URL" //your base URL
-#define TOKEN    "Your secret Token " //Your secret Token 
+#define BASE_URL "YOUR_BASE_URL" //your base URL
+#define TOKEN    "YOUR_SECRET_TOKEN" //Your secret Token 
 
 
 static EventGroupHandle_t wifi_event_group;
@@ -63,14 +64,37 @@ void wifi_connect() {
 
 //get data from sensor/temperature
 void app_main(void) {
-    nvs_flash_init();
+    printf("Starting ESP32...\n");
+    
+    // Set log levels to reduce output print
+    esp_log_level_set("esp-tls", ESP_LOG_ERROR);         // Only show TLS errors
+    esp_log_level_set("transport_base", ESP_LOG_ERROR);  // Only show transport errors  
+    esp_log_level_set("HTTP_CLIENT", ESP_LOG_ERROR);     // Only show HTTP client errors
+    esp_log_level_set("FIREBASE", ESP_LOG_ERROR);        // Only show Firebase errors
+    esp_log_level_set("wifi", ESP_LOG_ERROR);            // Only show WiFi errors
+    esp_log_level_set("*", ESP_LOG_WARN);                // Set default log level for all components
+    
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ret = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(ret);
+    
+    printf("NVS initialized\n");
+    
     wifi_connect();
 
     firebase_init(BASE_URL, TOKEN);
+    printf("Firebase initialized\n");
+    
     while(1){
-        vTaskDelay(pdMS_TO_TICKS(1000)); 
+        vTaskDelay(pdMS_TO_TICKS(5000)); // Increased delay to 5 seconds
         printf("Receiving temperature data...\n");
         firebase_get_int("sensor/temperature", &receivedata);
         printf("Temperature data received: %d\n", receivedata);
+        printf("Sending light status data to Firebase...\n");
+        firebase_put_data("light/light_1", FB_STRING, "On");
+        printf("Light status data sent!\n");
     }
 }
