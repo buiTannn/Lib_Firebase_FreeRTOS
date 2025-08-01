@@ -22,6 +22,8 @@ lib_deps =
 
 board_build.embed_files = .pio/libdeps/esp32doit-devkit-v1/Lib_Firebase_FreeRTOS/firebase_root_cert.pem
 ```
+### Option 2: 
+You can download the Lib_Firebase_FreeRTOS folder by downloading the folder below, put it in the destination address .pio/libdeps/esp32doit-devkit-v1/
 
 ### Step 3: Update CMakeLists.txt in the src folder to embed the certificate file
 Edit the CMakeLists.txt file located in the src directory and add the following block:
@@ -34,5 +36,21 @@ idf_component_register(
     INCLUDE_DIRS "."
     EMBED_TXTFILES "../.pio/libdeps/esp32doit-devkit-v1/Lib_Firebase_FreeRTOS/firebase_root_cert.pem"
 )
+```
+
+## Library main functions
+'Getting' data from FIREBASE:
+
+```c
+bool firebase_get_int(const char* path, int* output);
+bool firebase_get_float(const char* path, float* output);
+bool firebase_get_bool(const char* path, bool* output);
+bool firebase_get_string(const char* path, char** output);
+```
+
+'Putting' data to FIREBASE:
+
+```c
+void firebase_put_data(const char* path, fb_data_type_t type, ...);
 ```
 
