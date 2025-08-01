@@ -3,7 +3,7 @@
 #include "esp_http_client.h"
 #include <string.h>
 #include "cJSON.h"
-
+#include "http_retry_utils.h"
 #define TAG "FIREBASE"
 static char firebase_url[256];
 static char firebase_token[128];
@@ -30,14 +30,13 @@ void firebase_put(const char* path, const char* data) {
     esp_http_client_set_method(client, HTTP_METHOD_PUT);
     esp_http_client_set_header(client, "Content-Type", "application/json");
     esp_http_client_set_post_field(client, data, strlen(data));
-
-    esp_err_t err = esp_http_client_perform(client);
+    esp_err_t err = http_request_with_retry(client, 3,500);
     if (err == ESP_OK) {
         ESP_LOGI(TAG, "Firebase PUT success: %s", full_url);
-    } else {
+    }
+    else{
         ESP_LOGE(TAG, "Firebase PUT failed: %s", esp_err_to_name(err));
     }
-
     esp_http_client_cleanup(client);
 }
 //GET (done)
