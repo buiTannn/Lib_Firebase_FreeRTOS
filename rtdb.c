@@ -103,8 +103,16 @@ void firebase_put_data(const char* path, fb_data_type_t type, ...) {
             break;
         }
         case FB_STRING: {
-            const char* str = (const char*)va_arg(args, const char*);
-            snprintf(buffer, sizeof(buffer), "\"%s\"", str);  
+            char temp[33];
+            va_list args_copy;
+            va_copy(args_copy, args);
+            // Get the format string and the actual string
+            // Assuming the first argument is a format string
+            // and the second is the actual string to be formatted
+            const char* fmt = va_arg(args_copy,const char*);
+            vsniprintf(temp, sizeof(temp), fmt , args_copy);
+            va_end(args_copy);
+            snprintf(buffer, sizeof(buffer), "\"%s\"", temp);  
             break;
         }
         case FB_JSON: {
