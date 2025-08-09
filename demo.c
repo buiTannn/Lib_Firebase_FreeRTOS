@@ -66,14 +66,6 @@ void wifi_connect() {
 void app_main(void) {
     printf("Starting ESP32...\n");
     
-    // Set log levels to reduce output print
-    esp_log_level_set("esp-tls", ESP_LOG_ERROR);         // Only show TLS errors
-    esp_log_level_set("transport_base", ESP_LOG_ERROR);  // Only show transport errors  
-    esp_log_level_set("HTTP_CLIENT", ESP_LOG_ERROR);     // Only show HTTP client errors
-    esp_log_level_set("FIREBASE", ESP_LOG_ERROR);        // Only show Firebase errors
-    esp_log_level_set("wifi", ESP_LOG_ERROR);            // Only show WiFi errors
-    esp_log_level_set("*", ESP_LOG_WARN);                // Set default log level for all components
-    
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         ESP_ERROR_CHECK(nvs_flash_erase());
