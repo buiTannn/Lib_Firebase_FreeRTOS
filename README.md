@@ -53,6 +53,17 @@ bool firebase_get_string(const char* path, char** output);
 ```c
 void firebase_put_data(const char* path, fb_data_type_t type, ...);
 ```
+
+## Example 
+Putting text:
+```c
+firebase_put_data("/my/path/lcd", FB_STRING, "hello world");
+```
+Putting text and data: 
+```c
+int temperature = 25;
+firebase_put_data("/my/path/lcd", FB_STRING, "Temp = %d°C", temperature);
+```
 ## Coming Soon
 Website dashboard connect to Firebase server : https://iot-kit.vercel.app/
 <img width="2835" height="1579" alt="image" src="https://github.com/user-attachments/assets/c30d2cca-5526-47c8-96a3-489d68e7755a" />
