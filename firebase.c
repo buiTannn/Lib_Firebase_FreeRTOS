@@ -11,33 +11,57 @@ static char firebase_token[128];
 extern const char firebase_root_cert_pem_start[] asm("_binary_firebase_root_cert_pem_start");
 extern const char firebase_root_cert_pem_end[] asm("_binary_firebase_root_cert_pem_end");
 
+static esp_http_client_handle_t firebase_client = NULL;
+
 void firebase_init(const char* url, const char* token) {
-    strncpy(firebase_url, url, sizeof(firebase_url));
-    strncpy(firebase_token, token, sizeof(firebase_token));
+    strncpy(firebase_url, url, sizeof(firebase_url) - 1);
+    firebase_url[sizeof(firebase_url) - 1] = '\0';
+
+    strncpy(firebase_token, token, sizeof(firebase_token) - 1);
+    firebase_token[sizeof(firebase_token) - 1] = '\0';
+
+    char base_url[512];
+    snprintf(base_url, sizeof(base_url), "%s/.json?auth=%s", firebase_url, firebase_token);
+
+    esp_http_client_config_t config = {
+        .url = base_url,
+        .cert_pem = firebase_root_cert_pem_start,
+        .transport_type = HTTP_TRANSPORT_OVER_SSL,
+        .keep_alive_enable = true,
+    };
+
+    if (firebase_client) {
+        esp_http_client_cleanup(firebase_client);
+    }
+
+    firebase_client = esp_http_client_init(&config);
 }
-//PUT (done)
+
 void firebase_put(const char* path, const char* data) {
+    if (!firebase_client) {
+        ESP_LOGE(TAG, "Firebase client not initialized");
+        return;
+    }
+
     char full_url[512];
     snprintf(full_url, sizeof(full_url), "%s/%s.json?auth=%s", firebase_url, path, firebase_token);
 
-    esp_http_client_config_t config = {
-        .url = full_url,
-        .cert_pem = firebase_root_cert_pem_start,  
-        .transport_type = HTTP_TRANSPORT_OVER_SSL,
-    };
+    esp_http_client_set_url(firebase_client, full_url);
+    esp_http_client_set_method(firebase_client, HTTP_METHOD_PUT);
+    esp_http_client_set_header(firebase_client, "Content-Type", "application/json");
+    esp_http_client_set_post_field(firebase_client, data, strlen(data));
 
-    esp_http_client_handle_t client = esp_http_client_init(&config);
-    esp_http_client_set_method(client, HTTP_METHOD_PUT);
-    esp_http_client_set_header(client, "Content-Type", "application/json");
-    esp_http_client_set_post_field(client, data, strlen(data));
-    esp_err_t err = http_request_with_retry(client, 3,500);
-    if (err == ESP_OK) {
-        ESP_LOGI(TAG, "Firebase PUT success: %s", full_url);
-    }
-    else{
+    esp_err_t err = esp_http_client_perform(firebase_client);
+    if (err != ESP_OK) {
         ESP_LOGE(TAG, "Firebase PUT failed: %s", esp_err_to_name(err));
     }
-    esp_http_client_cleanup(client);
+}
+
+void firebase_cleanup() {
+    if (firebase_client) {
+        esp_http_client_cleanup(firebase_client);
+        firebase_client = NULL;
+    }
 }
 //GET (done)
 void firebase_get(const char* path, char* response_buf, int buf_size) {
