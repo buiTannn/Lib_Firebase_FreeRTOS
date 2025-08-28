@@ -112,67 +112,43 @@ void firebase_get(const char* path, char* response_buf, int buf_size) {
 }
 //PATCH (updating )
 void firebase_patch(const char* path, const char* data) {
+    if (!firebase_client) {
+        ESP_LOGE(TAG, "Firebase client not initialized");
+        return;
+    }
+
     char full_url[512];
     snprintf(full_url, sizeof(full_url), "%s/%s.json?auth=%s", firebase_url, path, firebase_token);
 
-    esp_http_client_config_t config = {
-        .url = full_url,
-        .cert_pem = firebase_root_cert_pem_start,
-        .transport_type = HTTP_TRANSPORT_OVER_SSL,
-    };
+    esp_http_client_set_url(firebase_client, full_url);
+    esp_http_client_set_method(firebase_client, HTTP_METHOD_PATCH);
+    esp_http_client_set_header(firebase_client, "Content-Type", "application/json");
+    esp_http_client_set_post_field(firebase_client, data, strlen(data));
 
-    esp_http_client_handle_t client = esp_http_client_init(&config);
-    esp_http_client_set_method(client, HTTP_METHOD_PATCH);
-    esp_http_client_set_header(client, "Content-Type", "application/json");
-    esp_http_client_set_post_field(client, data, strlen(data));
-
-    esp_err_t err = esp_http_client_perform(client);
+    esp_err_t err = esp_http_client_perform(firebase_client);
     if (err == ESP_OK) {
         ESP_LOGI(TAG, "Firebase PATCH success: %s", full_url);
     } else {
         ESP_LOGE(TAG, "Firebase PATCH failed: %s", esp_err_to_name(err));
     }
-    esp_http_client_cleanup(client);
 }
 //updating
 void firebase_delete(const char* path) {
+    if (!firebase_client) {
+        ESP_LOGE(TAG, "Firebase client not initialized");
+        return;
+    }
+
     char full_url[512];
     snprintf(full_url, sizeof(full_url), "%s/%s.json?auth=%s", firebase_url, path, firebase_token);
 
-    esp_http_client_config_t config = {
-        .url = full_url,
-        .cert_pem = firebase_root_cert_pem_start,
-        .transport_type = HTTP_TRANSPORT_OVER_SSL,
-    };
+    esp_http_client_set_url(firebase_client, full_url);
+    esp_http_client_set_method(firebase_client, HTTP_METHOD_DELETE);
 
-    esp_http_client_handle_t client = esp_http_client_init(&config);
-    esp_http_client_set_method(client, HTTP_METHOD_DELETE);
-
-    esp_err_t err = esp_http_client_perform(client);
+    esp_err_t err = esp_http_client_perform(firebase_client);
     if (err == ESP_OK) {
         ESP_LOGI(TAG, "Firebase DELETE success: %s", full_url);
     } else {
         ESP_LOGE(TAG, "Firebase DELETE failed: %s", esp_err_to_name(err));
     }
-    esp_http_client_cleanup(client);
-}
-
-bool firebase_test_connection() {
-    char full_url[512];
-    snprintf(full_url, sizeof(full_url), "%s/.json?auth=%s&print=pretty", firebase_url, firebase_token);
-
-    esp_http_client_config_t config = {
-        .url = full_url,
-        .cert_pem = firebase_root_cert_pem_start,
-        .transport_type = HTTP_TRANSPORT_OVER_SSL,
-        .timeout_ms = 5000, 
-    };
-
-    esp_http_client_handle_t client = esp_http_client_init(&config);
-    esp_http_client_set_method(client, HTTP_METHOD_GET);
-
-    esp_err_t err = esp_http_client_perform(client);
-    esp_http_client_cleanup(client);
-    
-    return (err == ESP_OK);
 }
